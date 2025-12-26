@@ -5,17 +5,20 @@
 - **语言规范**: 严格遵循 Kotlin 官方编码规范。
 - **Android 规范**:
     - 遵循 Modern Android Development (MAD) 指南。
-    - **UI 框架**: 全面使用 Jetpack Compose (+ Material3/Material You)，支持 Pixel 动态取色。
+  - **UI 框架**: 全面使用 Jetpack Compose (+ Material3/Material You/Material Express)，支持 Pixel
+    动态取色。
     - **架构**: MVVM (ViewModel + StateFlow + Repository)。
     - **依赖注入**: 使用 **Koin** (Koin-Android, Koin-Compose)。
     - **兼容性**: MinSDK 为 29 (Android 10)，TargetSDK 为 Latest (35)。
 - **功能特性规范**:
     - **混合数据源**:
         - 默认模式: 使用 `NetworkStatsManager`。
-        - 增强模式: 检测到 **Shizuku** 授权后，自动切换至 `/proc/net/dev` 解析模式，以实现精准的物理层流量统计（解决 VPN 双倍显示问题）。
-    - **VPN 修正**: Shizuku 模式下支持“接口黑名单”或“智能白名单”逻辑。
+      - 增强模式: 检测到 **Shizuku** 授权后，通过 **Binder** 连接系统服务获取数据 (不使用
+        `newProcess`)。
+    - **VPN 修正**: Shizuku 模式下完全依赖用户配置黑名单（无默认值）。
     - **UI 呈现**:
-        - 通知栏动态图标 (Notification Icon): 实时绘制 Bitmap。
+      - 首次启动不开启显示，由用户选择。
+      - 通知栏动态图标 (Notification Icon): 实时绘制 Bitmap。双向模式下合并展示总量。
         - 悬浮窗 (Floating Window): 使用 Compose 挂载到 WindowManager，支持独立开关。
 - **代码结构**:
     - 单个文件原则上不超过 1000 行。
@@ -23,7 +26,7 @@
     - 避免在 Activity 中编写业务逻辑。
 - **注释**:
     - 使用中文编写清晰的 KDoc 与行内注释。
-    - 凡是涉及 `/proc/` 文件解析、Shizuku Shell 命令、反射调用的地方，必须注释说明其必要性与安全边界。
+  - 凡是涉及 Shizuku Binder 调用、反射调用的地方，必须注释说明其必要性与安全边界。
 
 ### 测试与验证
 
@@ -71,7 +74,7 @@
     - **IPC**: 使用 Shizuku API 进行提权操作。
 - **Shizuku 注意事项**:
     - 必须处理 `BinderDeadListener`。
-    - 解析 `/proc/net/dev` 时需处理不同内核版本可能存在的格式差异。
+  - 使用 Binder 方式获取数据，避免 Shell 命令开销。
 
 ## 任务处理指南
 
