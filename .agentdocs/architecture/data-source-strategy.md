@@ -33,11 +33,16 @@ interface ISpeedDataSource {
     - 用户已授权 Shizuku。
     - 用户在设置中开启 "Enable Shizuku Mode"。
 - **实现原理**: 利用 Shizuku 提供的 **Binder** 机制连接到系统服务 (如 `INetworkManagementService`)
-  获取底层网络数据。**注意：不使用 `newProcess` 创建新进程，也不解析文本文件。**
+  获取底层网络数据。
+  - **严格限制**: **严禁**使用 `newProcess` 创建新进程，**严禁**直接读取或解析 `/proc/net/dev`
+    等文件。所有数据必须通过 IPC 接口获取。
+  - **版本适配**: 针对不同 Android 版本 (10-15) 的 Hidden API 差异，需分别进行适配 (反射或 AIDL
+    生成)。
 - **数据处理流程**:
 
     1. **连接服务**: 通过 Shizuku 获取系统服务的 IBinder 接口。
-    2. **获取数据**: 调用相关服务方法直接获取网络接口统计信息。
+  2. **获取数据**: 调用相关服务方法 (e.g. `getNetworkStatsTethering`, `getNetworkStatsUidDetail`)
+     获取网络接口统计信息。
     3. **应用黑名单 (Blacklist Logic)**:
         - 读取用户配置的 `ignored_interfaces` 列表（**默认列表为空**，完全由用户定义）。
         - 遍历接口数据，若接口名在黑名单中，则剔除。

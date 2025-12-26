@@ -21,8 +21,9 @@
 
 * **默认模式**: 使用 Android 原生 `NetworkStatsManager`。
 * **Shizuku 模式**:
-    * 通过 **Shizuku Binder** 机制连接系统服务 (`INetworkManagementService` 或其它内部服务)
-      获取底层网络数据 (不使用 `newProcess`/`cat` 命令)。
+    * 通过 **Shizuku Binder** 机制连接系统服务 (`INetworkManagementService` 或其他内部服务)
+      获取底层网络数据。
+    * **严格模式**: 必须通过 IPC 调用，**禁止**解析 `/proc` 文件或使用 Shell 文本处理。
     * **接口黑名单**: 完全依赖用户配置（**无默认忽略接口**）。
     * **计算公式**: `TrueSpeed = Sum(All_Interfaces) - Sum(User_Blacklisted_Interfaces)`。
 
@@ -61,7 +62,7 @@
 |:--------|:---------|:------------|:---------------------------------------------------------|:----|
 | **F01** | **核心服务** | 前台服务保活      | 启动 `dataSync` 类型的 Foreground Service，需处理 Android 14+ 适配。 | P0  |
 | **F02** | **数据源**  | 标准数据源       | 调用 `NetworkStatsManager` 获取流量数据。                         | P0  |
-| **F03** | **数据源**  | Shizuku 数据源 | 检测授权，Shell 读取 `/proc/net/dev`，解析并过滤数据。                   | P0  |
+| **F03** | **数据源**  | Shizuku 数据源 | 检测授权，通过 Shizuku Binder (IPC) 调用系统服务获取数据，需做多版本适配。         | P0  |
 | **F04** | **UI**   | 仪表盘首页       | 显示当前网速、运行模式 (Standard/Shizuku)、授权状态。                     | P0  |
 | **F05** | **配置**   | 接口过滤        | 提供 UI 配置忽略的接口列表 (如 `tun0`, `ppp0`)，支持快捷添加。               | P1  |
 | **F06** | **UI**   | 通知栏更新       | 每秒绘制 Bitmap 并更新 Notification。                            | P0  |

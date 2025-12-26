@@ -26,11 +26,19 @@ Pixel Pulse 严格遵循 Modern Android Development (MAD) 指南，全面采用 
     - **颜色**:
         - 默认：白色/灰色（适配深色/浅色状态栏）。
         - 进阶：检测系统 Dark Mode 状态自动反色。
-3. **IconCompat**: 将 Bitmap 转换为 `Icon` 对象。
-4. **NotificationBuilder**: 设置 `.setSmallIcon(Icon)` (注意：部分 OEM ROM 可能不支持 setSmallIcon 传
-   Bitmap，仅支持 ResID，但在 Pixel 类原生上通常可行，或者使用 `.setLargeIcon` 配合隐藏的小图标)。
-    - *Pixel 特例*: 原生 Android 通常只显示小图标蒙版 (Alpha Mask)。若要显示具体数字，可能需要利用
-      `setSmallIcon(IconCompat.createWithBitmap(bitmap))`，这在不同 Android 版本上表现不一，需重点测试。
+3. **IconCompat (Pixel/Android 12+ 适配)**:
+    - **目标效果**: 在 Pixel 设备上展示一个**单色**的网速图标，颜色必须**自动适配**状态栏背景（与其他系统
+      Icon 逻辑一致）。
+    - **实现方案**:
+        - 生成仅包含 Alpha 通道的 Bitmap (Alpha Mask)。
+        - 使用 `Icon.createWithBitmap(bitmap)` (或 `IconCompat`)。
+        - 尝试设置 `SetTint` 或依赖系统对 SmallIcon 的自动着色机制。
+    - **兼容性**:
+        - 若系统无法自动着色导致显示异常（如纯白方块），则回退到 LargeIcon 方案（SmallIcon
+          使用透明/静态图标，LargeIcon 显示具体网速）。
+4. **NotificationBuilder**:
+    - 优先尝试构建纯 Alpha Bitmap 作为 SmallIcon。
+    - 必须在真机验证不同背景（浅色/深色/壁纸取色）下的可见性。
 
 ## 3. 悬浮窗 (Floating Window)
 
