@@ -40,7 +40,7 @@ class NotificationHelper(private val context: Context) {
         textAlign = Paint.Align.CENTER
         isAntiAlias = true
         typeface = Typeface.DEFAULT_BOLD
-        textSize = size * 0.45f // Value text
+        textSize = size * 0.65f // Value text
     }
 
     private val unitPaint = Paint().apply {
@@ -48,7 +48,7 @@ class NotificationHelper(private val context: Context) {
         textAlign = Paint.Align.CENTER
         isAntiAlias = true
         typeface = Typeface.DEFAULT
-        textSize = size * 0.3f // Unit text
+        textSize = size * 0.4f // Unit text
     }
 
     fun createNotificationChannel() {
@@ -73,8 +73,8 @@ class NotificationHelper(private val context: Context) {
         // Draw Value stacked above Unit?
         // Or just Value if it fits?
         // Let's stack: Value roughly top-mid, Unit bottom-mid
-        val cyValue = size * 0.45f
-        val cyUnit = size * 0.35f
+        val cyValue = size * 0.5f
+        val cyUnit = size * 0.95f
 
         canvas.drawText(valueStr, cx, cyValue, textPaint)
         canvas.drawText(unitStr, cx, cyUnit, unitPaint)

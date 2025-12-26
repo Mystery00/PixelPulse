@@ -15,5 +15,8 @@ class MainApplication : Application() {
             androidContext(this@MainApplication)
             modules(appModule)
         }
+
+        // Initialize Notification Channel immediately
+        vip.mystery0.pixelpulse.service.NotificationHelper(this).createNotificationChannel()
     }
 }
