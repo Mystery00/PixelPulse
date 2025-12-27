@@ -1,6 +1,12 @@
 [versions]
 agp = "8.13.2"
 kotlin = "2.3.0"
+
+app-version = "1.0"
+android-compileSdk = "36"
+android-minSdk = "36"
+android-targetSdk = "36"
+
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
@@ -9,7 +15,7 @@ material-icons = "1.7.8"
 koin = "4.1.1"
 coil = "3.3.0"
 palette = "1.0.0"
-datastore = "1.1.2"
+datastore = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
