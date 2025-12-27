@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PixelMeter</string>
+    <string name="app_name" translatable="false">Pixel Meter</string>
     <string name="title_configuration">Configuration</string>
     <string name="title_monitor_control">Monitor Control</string>
     <string name="label_total_speed">Total Speed</string>

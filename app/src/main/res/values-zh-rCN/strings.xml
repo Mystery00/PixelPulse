@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">PixelMeter</string>
     <string name="title_configuration">权限配置</string>
     <string name="title_monitor_control">服务运行控制</string>
     <string name="label_total_speed">总网速</string>

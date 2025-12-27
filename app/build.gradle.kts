@@ -57,23 +57,17 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             versionNameSuffix = ".d$gitVersionCode.$gitVersionName"
-            signingConfig = signingConfigs.getByName("sign")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles("proguard-rules.pro")
             versionNameSuffix = ".r$gitVersionCode.$gitVersionName"
-            signingConfig = signingConfigs.getByName("sign")
-        }
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("sign")
         }
     }
     compileOptions {
