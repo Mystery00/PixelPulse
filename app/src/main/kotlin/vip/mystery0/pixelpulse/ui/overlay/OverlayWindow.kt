@@ -29,12 +29,14 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import kotlinx.coroutines.launch
 import vip.mystery0.pixelpulse.data.repository.NetworkRepository
 import vip.mystery0.pixelpulse.data.source.NetSpeedData
 import vip.mystery0.pixelpulse.ui.theme.PixelPulseTheme
@@ -71,52 +73,55 @@ class OverlayWindow(
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
-        val (initialX, initialY) = repository.getOverlayPosition()
+        lifecycleScope.launch {
+            val (initialX, initialY) = repository.getOverlayPosition()
 
-        params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = initialX
-            y = initialY
-        }
+            params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = initialX
+                y = initialY
+            }
 
-        val composeView = ComposeView(context)
-        composeView.setViewTreeLifecycleOwner(this@OverlayWindow)
-        composeView.setViewTreeViewModelStoreOwner(this@OverlayWindow)
-        composeView.setViewTreeSavedStateRegistryOwner(this@OverlayWindow)
+            val composeView = ComposeView(context)
+            composeView.setViewTreeLifecycleOwner(this@OverlayWindow)
+            composeView.setViewTreeViewModelStoreOwner(this@OverlayWindow)
+            composeView.setViewTreeSavedStateRegistryOwner(this@OverlayWindow)
 
-        composeView.setContent {
-            PixelPulseTheme {
-                val isLocked by repository.isOverlayLocked.collectAsState()
-                OverlayContent(
-                    speed = speedState,
-                    onDrag = { x, y ->
-                        if (!isLocked) {
+            composeView.setContent {
+                PixelPulseTheme {
+                    val isLocked by repository.isOverlayLocked.collectAsState()
+                    OverlayContent(
+                        speed = speedState,
+                        onDrag = { x, y ->
+                            if (!isLocked) {
+                                params?.let { p ->
+                                    p.x += x.roundToInt()
+                                    p.y += y.roundToInt()
+                                    windowManager.updateViewLayout(composeView, p)
+                                }
+                            }
+                        },
+                        onDragEnd = {
                             params?.let { p ->
-                                p.x += x.roundToInt()
-                                p.y += y.roundToInt()
-                                windowManager.updateViewLayout(composeView, p)
+                                repository.saveOverlayPosition(p.x, p.y)
                             }
                         }
-                    },
-                    onDragEnd = {
-                        params?.let { p ->
-                            repository.saveOverlayPosition(p.x, p.y)
-                        }
-                    }
-                )
+                    )
+                }
             }
+
+            windowManager.addView(composeView, params)
+            view = composeView
         }
 
-        windowManager.addView(composeView, params)
-        view = composeView
     }
 
     fun update(speed: NetSpeedData) {

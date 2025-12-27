@@ -1,7 +1,5 @@
 package vip.mystery0.pixelpulse.data.repository
 
-import android.content.SharedPreferences
-import androidx.core.content.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -9,8 +7,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import vip.mystery0.pixelpulse.data.source.NetSpeedData
 import vip.mystery0.pixelpulse.data.source.impl.SpeedDataSource
@@ -18,7 +18,7 @@ import java.util.Locale
 
 class NetworkRepository(
     private val standardDataSource: SpeedDataSource,
-    private val prefs: SharedPreferences
+    private val dataStoreRepository: DataStoreRepository,
 ) : KoinComponent {
     private val _isOverlayEnabled = MutableStateFlow(false)
     val isOverlayEnabled: StateFlow<Boolean> = _isOverlayEnabled.asStateFlow()
@@ -46,42 +46,51 @@ class NetworkRepository(
     private var lastTime = 0L
 
     init {
-        _isLiveUpdateEnabled.value = prefs.getBoolean("key_live_update", false)
-        _isNotificationEnabled.value = prefs.getBoolean("key_notification_enabled", true)
-        _isOverlayLocked.value = prefs.getBoolean("key_overlay_locked", false)
-        _isOverlayEnabled.value = prefs.getBoolean("key_overlay_enabled", false)
+        runBlocking {
+            _isLiveUpdateEnabled.value = dataStoreRepository.isLiveUpdateEnabled.first()
+            _isNotificationEnabled.value = dataStoreRepository.isNotificationEnabled.first()
+            _isOverlayLocked.value = dataStoreRepository.isOverlayLocked.first()
+            _isOverlayEnabled.value = dataStoreRepository.isOverlayEnabled.first()
+        }
+        scope.launch {
+            dataStoreRepository.isLiveUpdateEnabled.collect { _isLiveUpdateEnabled.value = it }
+        }
+        scope.launch {
+            dataStoreRepository.isNotificationEnabled.collect { _isNotificationEnabled.value = it }
+        }
+        scope.launch {
+            dataStoreRepository.isOverlayLocked.collect { _isOverlayLocked.value = it }
+        }
+        scope.launch {
+            dataStoreRepository.isOverlayEnabled.collect { _isOverlayEnabled.value = it }
+        }
     }
 
     fun setOverlayEnabled(enable: Boolean) {
-        _isOverlayEnabled.value = enable
-        prefs.edit { putBoolean("key_overlay_enabled", enable) }
+        scope.launch { dataStoreRepository.setOverlayEnabled(enable) }
     }
 
     fun setLiveUpdateEnabled(enable: Boolean) {
-        _isLiveUpdateEnabled.value = enable
-        prefs.edit { putBoolean("key_live_update", enable) }
+        scope.launch { dataStoreRepository.setLiveUpdateEnabled(enable) }
     }
 
     fun setNotificationEnabled(enable: Boolean) {
-        _isNotificationEnabled.value = enable
-        prefs.edit { putBoolean("key_notification_enabled", enable) }
+        scope.launch { dataStoreRepository.setNotificationEnabled(enable) }
     }
 
     fun setOverlayLocked(locked: Boolean) {
-        _isOverlayLocked.value = locked
-        prefs.edit { putBoolean("key_overlay_locked", locked) }
+        scope.launch { dataStoreRepository.setOverlayLocked(locked) }
     }
 
-    fun getOverlayPosition(): Pair<Int, Int> {
-        val x = prefs.getInt("key_overlay_x", 100)
-        val y = prefs.getInt("key_overlay_y", 200)
+    suspend fun getOverlayPosition(): Pair<Int, Int> {
+        val x = dataStoreRepository.overlayX.first()
+        val y = dataStoreRepository.overlayY.first()
         return x to y
     }
 
     fun saveOverlayPosition(x: Int, y: Int) {
-        prefs.edit {
-            putInt("key_overlay_x", x)
-            putInt("key_overlay_y", y)
+        scope.launch {
+            dataStoreRepository.saveOverlayPosition(x, y)
         }
     }
 

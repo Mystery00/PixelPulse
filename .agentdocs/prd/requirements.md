@@ -67,11 +67,14 @@ Kernel 数据剔除虚拟接口流量，还原真实网速。
 
 ## 5. 数据存储 (DataStore)
 
-| Key                   | 类型      | 默认值          | 说明                |
-|:----------------------|:--------|:-------------|:------------------|
-| `display_mode`        | Enum    | `BOTH`       | 显示模式 (上/下/合并总速)   |
-| `enable_notification` | Boolean | `false`      | 通知栏开关 (默认关闭)      |
-| `enable_overlay`      | Boolean | `false`      | 悬浮窗开关             |
+| Key                        | 类型      | 默认值     | 说明        |
+|:---------------------------|:--------|:--------|:----------|
+| `key_live_update`          | Boolean | `false` | 首页实时更新开关  |
+| `key_notification_enabled` | Boolean | `true`  | 通知栏开关     |
+| `key_overlay_enabled`      | Boolean | `false` | 悬浮窗开关     |
+| `key_overlay_locked`       | Boolean | `false` | 悬浮窗位置锁定开关 |
+| `key_overlay_x`            | Int     | `100`   | 悬浮窗 X 坐标  |
+| `key_overlay_y`            | Int     | `200`   | 悬浮窗 Y 坐标  |
 
 ## 6. 非功能性需求 (NFR)
 
