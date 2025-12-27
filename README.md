@@ -1,0 +1,56 @@
+[LICENSE](LICENSE)# PixelMeter
+
+<p align="center">
+  <img src="app/src/main/ic_launcher-playstore.png" width="200" alt="PixelMeter Logo"/>
+</p>
+
+<p align="center">
+  <strong>Precise internet speed monitor designed for Pixel and Native Android.</strong>
+</p>
+
+<p align="center">
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/Mystery00/PixelPulse" alt="License"></a>
+</p>
+
+[简体中文](README_CN.md)
+
+## About
+
+PixelMeter is a network speed monitor application designed specifically for Google Pixel and native
+Android devices. Unlike traditional speed monitors, PixelMeter solves a common issue where using a
+VPN causes the displayed network speed to be double the actual speed (counting both the physical
+interface and the virtual VPN interface).
+
+**PixelMeter intelligently filters out VPN traffic**, directly reading from physical network
+interfaces (Wi-Fi, Cellular, Ethernet) to provide accurate real-time speed statistics.
+
+## Features
+
+- **Precise Traffic Stats**: Uses `ConnectivityManager` and `TrafficStats` to filter out `tun0` and
+  other virtual interfaces.
+- **Native Experience**: Built with Jetpack Compose and Material 3, supporting Dynamic Color on
+  Pixel devices.
+- **Flexible Display**:
+    - **Notification Bar**: Dynamic icon that updates in real-time.
+    - **Floating Window**: Overlay that can be toggled and moved independently.
+    - **Combined Mode**: Option to show total speed (Upload + Download).
+- **Privacy Focused**: All data is processed locally. No traffic data is uploaded.
+- **Built-in Tools**: Integrated Cloudflare Speed Test via Chrome Custom Tabs.
+
+## Requirements
+
+- **Device**: Google Pixel series (recommended) or devices running native Android (AOSP).
+- **Android Version**: Android 16 (API Level 36) or higher.
+- **Permissions**: Notification (for the status bar icon) and Overlay (for the floating window).
+
+## Architecture
+
+- **Language**: Kotlin
+- **UI Framework**: Jetpack Compose (Material 3)
+- **Architecture Pattern**: MVVM + Clean Architecture
+- **Dependency Injection**: Koin
+- **Data Source**: `TrafficStats` + `ConnectivityManager` (Single Source of Truth)
+
+## License
+
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
