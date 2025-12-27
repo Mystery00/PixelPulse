@@ -1,4 +1,4 @@
-# PixelMeter
+# Pixel Meter
 
 <p align="center">
   <img src="app/src/main/ic_launcher-playstore.png" width="200" alt="PixelMeter Logo"/>
