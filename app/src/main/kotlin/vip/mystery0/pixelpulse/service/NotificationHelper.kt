@@ -47,8 +47,8 @@ class NotificationHelper(private val context: Context) {
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
         isAntiAlias = true
-        typeface = Typeface.DEFAULT
-        textSize = size * 0.4f // Unit text
+        typeface = Typeface.DEFAULT_BOLD
+        textSize = size * 0.35f // Unit text
     }
 
     fun createNotificationChannel() {
@@ -65,7 +65,7 @@ class NotificationHelper(private val context: Context) {
 
     fun buildNotification(speed: NetSpeedData): Notification {
         val totalSpeed = speed.totalSpeed
-        val (valueStr, unitStr) = formatSpeedUsage(totalSpeed)
+        val (valueStr, unitStr) = formatSpeedUsage(totalSpeed, true)
 
         // Draw Bitmap
         bitmap.eraseColor(Color.TRANSPARENT)
@@ -130,8 +130,8 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    private fun formatSpeedUsage(bytes: Long): Pair<String, String> {
-        if (bytes < 1024) return bytes.toString() to "B/s"
+    private fun formatSpeedUsage(bytes: Long, forIcon: Boolean): Pair<String, String> {
+        if (bytes < 1024) return if (forIcon) "0" to "KB/s" else bytes.toString() to "B/s"
         val kb = bytes / 1024.0
         if (kb < 1000) return "%.0f".format(Locale.US, kb) to "KB/s"
         val mb = kb / 1024.0
@@ -144,7 +144,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     private fun formatSpeedLine(bytes: Long): String {
-        val (v, u) = formatSpeedUsage(bytes)
-        return "$v$u/s"
+        val (v, u) = formatSpeedUsage(bytes, false)
+        return "$v$u"
     }
 }

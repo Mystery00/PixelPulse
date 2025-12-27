@@ -2,15 +2,12 @@ package vip.mystery0.pixelpulse.service
 
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
@@ -19,10 +16,9 @@ import vip.mystery0.pixelpulse.data.source.NetSpeedData
 import vip.mystery0.pixelpulse.ui.overlay.OverlayWindow
 
 class NetworkMonitorService : Service() {
-
     private val repository: NetworkRepository by inject()
     private val notificationHelper by lazy { NotificationHelper(this) }
-    private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+    private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
     private val overlayWindow: OverlayWindow by inject()
 
     private var serviceJob: Job? = null
@@ -56,18 +52,13 @@ class NetworkMonitorService : Service() {
 
     private fun startMonitoring() {
         serviceJob?.cancel()
+
+        // Start Repository Monitoring
+        repository.startMonitoring()
+        
         serviceJob = scope.launch {
-            while (isActive) {
-                val startTime = System.currentTimeMillis()
-
-                val speed = repository.getCurrentSpeed()
-
+            repository.netSpeed.collect { speed ->
                 // Overlay logic
-                // Ensure we run show/hide on Main Thread if it touches views?
-                // OverlayWindow uses WindowManager adds view. WindowManager calls should be thread safe or UI thread?
-                // ComposeView creation MUST be on Main Thread.
-                // So show()/hide() must switch to Main.
-
                 withContext(Dispatchers.Main) {
                     if (repository.isOverlayEnabled.value) {
                         overlayWindow.show()
@@ -77,12 +68,9 @@ class NetworkMonitorService : Service() {
                     }
                 }
 
+                // Notification logic
                 val notification = notificationHelper.buildNotification(speed)
                 notificationManager.notify(NotificationHelper.NOTIFICATION_ID, notification)
-
-                val elapsed = System.currentTimeMillis() - startTime
-                val delayTime = (1000 - elapsed).coerceAtLeast(100)
-                delay(delayTime)
             }
         }
     }
@@ -90,6 +78,7 @@ class NetworkMonitorService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob?.cancel()
+        repository.stopMonitoring()
         stopForeground(STOP_FOREGROUND_REMOVE)
     }
 }

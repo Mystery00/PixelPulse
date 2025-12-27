@@ -5,6 +5,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import vip.mystery0.pixelpulse.di.appModule
+import vip.mystery0.pixelpulse.service.NotificationHelper
 
 class MainApplication : Application() {
     override fun onCreate() {
@@ -17,6 +18,6 @@ class MainApplication : Application() {
         }
 
         // Initialize Notification Channel immediately
-        vip.mystery0.pixelpulse.service.NotificationHelper(this).createNotificationChannel()
+        NotificationHelper(this).createNotificationChannel()
     }
 }

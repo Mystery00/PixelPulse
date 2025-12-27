@@ -7,6 +7,11 @@ data class NetSpeedData(
     val totalSpeed: Long get() = downloadSpeed + uploadSpeed
 }
 
+data class NetworkTrafficData(
+    val rxBytes: Long,
+    val txBytes: Long,
+)
+
 interface ISpeedDataSource {
-    suspend fun getNetSpeed(): NetSpeedData
+    suspend fun getTrafficData(): NetworkTrafficData?
 }

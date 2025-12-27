@@ -1,54 +1,48 @@
-# 混合数据源策略 (Hybrid Data Source Strategy)
+# 数据源策略 (Data Source Strategy)
 
-Pixel Pulse 采用“混合数据源”架构，旨在解决 Android 流量统计在 VPN 环境下的双倍显示问题。
+## 概述
 
-## 1. 架构概览
+Pixel Pulse 采用**单一数据源模式**，利用 Android 原生 `TrafficStats` API 获取实时网速。
+通过指定接口名称 (`wlan0`) 和移动网络接口，我们可以精确统计流量并计算网速，无需 Root 权限，也无需复杂的
+Shizuku IPC。
 
-系统内部抽象了 `ISpeedDataSource` 接口，根据当前运行环境（是否授权 Shizuku）动态提供不同的实现。
+## 核心策略: TrafficStats 差值计算
+
+### 原理
+
+Android 的 `TrafficStats` 提供了直接读取内核网络计数器的能力。
+为了避免 VPN 造成的流量双重统计（虚拟接口 + 物理接口），我们**显式只读取物理接口**的数据：
+
+1. **Wi-Fi**: `TrafficStats.getRxBytes("wlan0")`
+2. **Cellular**: `TrafficStats.getMobileRxBytes()`
 
 ```kotlin
-interface ISpeedDataSource {
-    fun getNetSpeed(): NetSpeedData
-}
+val totalRx = TrafficStats.getMobileRxBytes() + TrafficStats.getRxBytes("wlan0")
+val totalTx = TrafficStats.getMobileTxBytes() + TrafficStats.getTxBytes("wlan0")
 ```
 
-## 2. 标准模式 (Standard Mode)
+### 优势
 
-- **适用场景**:
-    - 默认状态。
-    - 用户未安装 Shizuku。
-    - Shizuku 服务异常断开。
-- **实现原理**: 此模式直接调用 Android 官方 API `NetworkStatsManager`。
-- **数据获取**:
-    - 查询 `NetworkCapabilities.TRANSPORT_WIFI` (Wi-Fi 接口流量)。
-    - 查询 `NetworkCapabilities.TRANSPORT_CELLULAR` (蜂窝网络流量)。
-    - 将两者累加。
-- **优缺点**:
-    - ✅ 兼容性极佳，无需特殊权限。
-    - ❌ 无法区分物理网卡与 VPN 虚拟网卡，导致开启 VPN 时显示的网速通常为真实值的 2 倍。
+1. **实时性**: 直接读取 `/proc/net/xt_qtaguid/stats` 或 `/sys/class/net/.../statistics` (由
+   Framework 封装)，无缓存桶延迟。
+2. **准确性**: 物理接口流量真实反映了网卡吞吐量。
+3. **简单性**: 无需处理 `NetworkStatsManager` 的 Session、Bucket、SubscriberId 权限等复杂逻辑。
+4. **无需 Root/ADB**: 普通应用权限即可运行。
 
-## 3. Shizuku 增强模式 (Shizuku Mode)
+## 历史演进 (已废弃方案)
 
-- **适用场景**:
-    - 用户已授权 Shizuku。
-    - 用户在设置中开启 "Enable Shizuku Mode"。
-- **实现原理**: 利用 Shizuku 提供的 **Binder** 机制连接到系统服务 (如 `INetworkManagementService`)
-  获取底层网络数据。
-  - **严格限制**: **严禁**使用 `newProcess` 创建新进程，**严禁**直接读取或解析 `/proc/net/dev`
-    等文件。所有数据必须通过 IPC 接口获取。
-  - **版本适配**: 针对不同 Android 版本 (10-15) 的 Hidden API 差异，需分别进行适配 (反射或 AIDL
-    生成)。
-- **数据处理流程**:
+### 1. NetworkStatsManager (已移除)
 
-    1. **连接服务**: 通过 Shizuku 获取系统服务的 IBinder 接口。
-  2. **获取数据**: 调用相关服务方法 (e.g. `getNetworkStatsTethering`, `getNetworkStatsUidDetail`)
-     获取网络接口统计信息。
-    3. **应用黑名单 (Blacklist Logic)**:
-        - 读取用户配置的 `ignored_interfaces` 列表（**默认列表为空**，完全由用户定义）。
-        - 遍历接口数据，若接口名在黑名单中，则剔除。
-    4. **计算总和**: 将剩余接口的数据累加。
+* **问题**: 系统级 Bucket 导致 2-3 小时的延迟归档，无法用于实时网速显示（会有 "0 -> 0 -> 巨大脉冲"
+  的现象）。
+* **尝试优化**: 曾尝试 2秒 采样窗口平滑处理，但体验仍由延迟。
 
-## 4. 模式切换与降级
+### 2. Shizuku (Binder IPC) (已移除)
 
-- **自动切换**: App 启动时检测 Shizuku 权限，若有则自动激活增强模式（需用户设置允许）。
-- **异常降级**: 监听 Shizuku `BinderDeadListener`。一旦检测到 Shizuku 服务端死亡，立即切换回标准模式，并记录日志或提示用户。
+* **问题**: 需要用户激活 Shizuku，门槛较高。
+* **状态**: 随着 `TrafficStats` 物理接口方案的验证成功，Shizuku 模式已被彻底移除，简化了项目架构。
+
+## 兼容性
+
+* **MinSDK**: 31 (Android 12)。
+* **Device**: Google Pixel 系列 (主要目标)，以及其他遵循标准接口命名的 Android 设备。

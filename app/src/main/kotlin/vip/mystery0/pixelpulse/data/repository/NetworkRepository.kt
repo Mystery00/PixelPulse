@@ -1,121 +1,95 @@
 package vip.mystery0.pixelpulse.data.repository
 
-import android.app.AppOpsManager
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Process
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
-import rikka.shizuku.Shizuku
 import vip.mystery0.pixelpulse.data.source.NetSpeedData
-import vip.mystery0.pixelpulse.data.source.impl.ShizukuSpeedDataSource
-import vip.mystery0.pixelpulse.data.source.impl.StandardSpeedDataSource
+import vip.mystery0.pixelpulse.data.source.impl.SpeedDataSource
 
 class NetworkRepository(
-    private val context: Context,
-    private val standardDataSource: StandardSpeedDataSource,
-    private val shizukuDataSource: ShizukuSpeedDataSource
+    private val standardDataSource: SpeedDataSource
 ) : KoinComponent {
-    private val _isShizukuMode = MutableStateFlow(false)
-    val isShizukuMode: StateFlow<Boolean> = _isShizukuMode.asStateFlow()
-
-    private val _shizukuPermissionGranted = MutableStateFlow(false)
-    val shizukuPermissionGranted: StateFlow<Boolean> = _shizukuPermissionGranted.asStateFlow()
-
-    private val _blacklistedInterfaces = MutableStateFlow<Set<String>>(emptySet())
-    val blacklistedInterfaces: StateFlow<Set<String>> = _blacklistedInterfaces.asStateFlow()
 
     private val _isOverlayEnabled = MutableStateFlow(false)
     val isOverlayEnabled: StateFlow<Boolean> = _isOverlayEnabled.asStateFlow()
 
-    private val _hasUsagePermission = MutableStateFlow(false)
-    val hasUsagePermission: StateFlow<Boolean> = _hasUsagePermission.asStateFlow()
+    private val _netSpeed = MutableStateFlow(NetSpeedData(0, 0))
+    val netSpeed: StateFlow<NetSpeedData> = _netSpeed.asStateFlow()
 
-    private val binderDeadListener = Shizuku.OnBinderDeadListener {
-        _shizukuPermissionGranted.tryEmit(false)
-        checkShizukuPermission()
-    }
+    private var monitoringJob: Job? = null
+    private val scope = CoroutineScope(Dispatchers.Default)
 
-    private val permissionResultListener =
-        Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-            if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                _shizukuPermissionGranted.tryEmit(true)
-            }
-        }
-
-    init {
-        try {
-            Shizuku.addBinderDeadListener(binderDeadListener)
-            Shizuku.addRequestPermissionResultListener(permissionResultListener)
-            checkShizukuPermission()
-        } catch (_: Throwable) {
-            // Shizuku not installed or not running
-        }
-    }
-
-    fun requestShizukuPermission() {
-        try {
-            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-                Shizuku.requestPermission(0)
-            } else {
-                _shizukuPermissionGranted.tryEmit(true)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    fun checkShizukuPermission() {
-        try {
-            if (Shizuku.pingBinder()) {
-                val granted = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-                _shizukuPermissionGranted.tryEmit(granted)
-            } else {
-                _shizukuPermissionGranted.tryEmit(false)
-            }
-        } catch (_: Throwable) {
-            _shizukuPermissionGranted.tryEmit(false)
-        }
-    }
-
-    fun setShizukuMode(enable: Boolean) {
-        _isShizukuMode.value = enable
-        if (enable) {
-            checkShizukuPermission()
-        }
-    }
-
-    fun checkUsagePermission() {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.unsafeCheckOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(),
-            context.packageName
-        )
-        _hasUsagePermission.value = (mode == AppOpsManager.MODE_ALLOWED)
-    }
-
-    fun updateBlacklist(list: Set<String>) {
-        _blacklistedInterfaces.value = list
-        shizukuDataSource.updateBlacklist(list)
-    }
+    private var lastTotalRxBytes = 0L
+    private var lastTotalTxBytes = 0L
+    private var lastTime = 0L
 
     fun setOverlayEnabled(enable: Boolean) {
         _isOverlayEnabled.value = enable
     }
 
-    suspend fun getCurrentSpeed(): NetSpeedData {
-        return if (_isShizukuMode.value && _shizukuPermissionGranted.value) {
-            try {
-                shizukuDataSource.getNetSpeed()
-            } catch (e: Exception) {
-                // Fallback to standard if Shizuku fails transiently
-                standardDataSource.getNetSpeed()
+    fun startMonitoring() {
+        if (monitoringJob?.isActive == true) return
+
+        // Reset state
+        lastTotalRxBytes = 0L
+        lastTotalTxBytes = 0L
+        lastTime = 0L
+
+        monitoringJob = scope.launch {
+            while (isActive) {
+                val startTime = System.currentTimeMillis()
+                val source = standardDataSource
+
+                val interval = 1000L
+
+                // Get Traffic Data
+                val trafficData = source.getTrafficData()
+
+                if (trafficData != null) {
+                    val currentTime = System.currentTimeMillis()
+                    val totalRxBytes = trafficData.rxBytes
+                    val totalTxBytes = trafficData.txBytes
+
+                    if (lastTime != 0L) {
+                        val timeDelta = currentTime - lastTime
+                        val rxDelta = totalRxBytes - lastTotalRxBytes
+                        val txDelta = totalTxBytes - lastTotalTxBytes
+
+                        if (timeDelta > 0) {
+                            // Calculate speed
+                            val downloadSpeed = ((rxDelta * 1000) / timeDelta).coerceAtLeast(0)
+                            val uploadSpeed = ((txDelta * 1000) / timeDelta).coerceAtLeast(0)
+
+                            if (downloadSpeed != 0L || uploadSpeed != 0L) {
+                                _netSpeed.value = NetSpeedData(
+                                    downloadSpeed.coerceAtLeast(0),
+                                    uploadSpeed.coerceAtLeast(0)
+                                )
+                            }
+                        }
+                    }
+
+                    lastTotalRxBytes = totalRxBytes
+                    lastTotalTxBytes = totalTxBytes
+                    lastTime = currentTime
+                }
+
+                // Delay to achieve the desired interval
+                val delayMills = interval - (System.currentTimeMillis() - startTime)
+                delay(delayMills.coerceAtLeast(0))
             }
-        } else {
-            standardDataSource.getNetSpeed()
         }
+    }
+
+    fun stopMonitoring() {
+        monitoringJob?.cancel()
+        monitoringJob = null
     }
 }

@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "vip.mystery0.pixelpulse"
-        minSdk = 29
+        minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -18,11 +18,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -38,7 +40,7 @@ android {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-        freeCompilerArgs.add("-Xopt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
     }
 }
 
@@ -57,8 +59,5 @@ dependencies {
     implementation(libs.androidx.palette.ktx)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
-    implementation(libs.rikka.shizuku.api)
-    implementation(libs.rikka.shizuku.provider)
     implementation(libs.coil.compose)
-    implementation(libs.hiddenapibypass)
 }
