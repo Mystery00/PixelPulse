@@ -27,7 +27,7 @@ interfaces (Wi-Fi, Cellular, Ethernet) to provide accurate real-time speed stati
 ## Screenshots
 
 <p align="center">
-  <img src="docs/Screenshot.png" width="400" alt="App Screenshot"/>
+  <img src="docs/Screenshot_EN.png" width="400" alt="App Screenshot"/>
 </p>
 <p align="center">
   <img src="docs/Component.png" width="175" alt="App Component"/>

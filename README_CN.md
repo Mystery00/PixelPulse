@@ -24,7 +24,7 @@ Pixel Meter 是一款专为 Google Pixel 和原生 Android 设备设计的网速
 ## 软件截图
 
 <p align="center">
-  <img src="docs/Screenshot.png" width="400" alt="软件截图"/>
+  <img src="docs/Screenshot_CN.png" width="400" alt="软件截图"/>
 </p>
 <p align="center">
   <img src="docs/Component.png" width="175" alt="软件组件展示"/>
