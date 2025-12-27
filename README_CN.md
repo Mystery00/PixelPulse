@@ -8,6 +8,10 @@
   <strong>专为 Pixel 和原生 Android 设计的精准网速指示器。</strong>
 </p>
 
+<p align="center">
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/Mystery00/PixelMeter" alt="License"></a>
+</p>
+
 [English](README.md)
 
 ## 简介

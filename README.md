@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/Mystery00/PixelPulse" alt="License"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/Mystery00/PixelMeter" alt="License"></a>
 </p>
 
 [简体中文](README_CN.md)
