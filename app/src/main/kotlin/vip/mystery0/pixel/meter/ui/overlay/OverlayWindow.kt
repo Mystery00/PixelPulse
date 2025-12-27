@@ -164,13 +164,13 @@ fun OverlayContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "â–?${NetworkRepository.formatSpeedLine(speed.downloadSpeed)}",
+                text = "â–¼ ${NetworkRepository.formatSpeedLine(speed.downloadSpeed)}",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Box(modifier = Modifier.padding(horizontal = 4.dp))
             Text(
-                text = "â–?${NetworkRepository.formatSpeedLine(speed.uploadSpeed)}",
+                text = "â–² ${NetworkRepository.formatSpeedLine(speed.uploadSpeed)}",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 color = MaterialTheme.colorScheme.onSurface
             )

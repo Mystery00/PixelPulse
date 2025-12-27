@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -83,31 +84,33 @@ class MainActivity : ComponentActivity() {
                     SpeedDashboardCard(speed)
                 }
 
-                item {
-                    Text(
-                        stringResource(R.string.title_configuration),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
                 // Service Permission Error Card
                 if (serviceError != null) {
                     item {
-                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                        Text(
+                            stringResource(R.string.title_configuration),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    stringResource(R.string.error_service_title),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onErrorContainer
-                                )
                                 Text(
                                     serviceError?.first ?: stringResource(R.string.error_unknown),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Spacer(modifier = Modifier.weight(1F))
                                     Button(onClick = {
                                         serviceError?.let { (_, action) ->
                                             val intent = Intent(action)
@@ -132,9 +135,8 @@ class MainActivity : ComponentActivity() {
                                     }) {
                                         Text(stringResource(R.string.action_request_fix))
                                     }
-                                    Button(
+                                    TextButton(
                                         onClick = { viewModel.clearError() },
-                                        colors = ButtonDefaults.textButtonColors()
                                     ) {
                                         Text(stringResource(R.string.action_dismiss))
                                     }
@@ -199,6 +201,14 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                }
+
+                item {
+                    Text(
+                        stringResource(R.string.title_feature_config),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 item {

@@ -12,6 +12,7 @@
     <string name="action_request_fix">Request / Fix</string>
     <string name="action_dismiss">Dismiss</string>
 
+    <string name="title_feature_config">Feature Configuration</string>
     <string name="config_enable_overlay">Enable Overlay</string>
     <string name="config_enable_overlay_desc">Show floating window</string>
     <string name="config_lock_overlay">Lock Floating Window</string>
@@ -21,7 +22,6 @@
     <string name="config_enable_live_update">Enable Live Update</string>
     <string name="config_enable_live_update_desc">Use status bar chip (Not Implemented)</string>
 
-    <string name="error_service_title">Service Error</string>
     <string name="error_unknown">Unknown error</string>
     <string name="error_notification_permission">Notification permission required</string>
     <string name="error_overlay_permission">Overlay permission required for Floating Window</string>
@@ -29,6 +29,6 @@
 
     <string name="notification_channel_name">Network Monitor Service</string>
     <string name="notification_content_title">Network Speed Monitor</string>
-    <string name="notification_content_text">Monitoring in background...</string>
+    <string name="notification_content_text">Monitoring in background…</string>
 
 </resources>
