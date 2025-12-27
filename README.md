@@ -24,6 +24,15 @@ interface and the virtual VPN interface).
 **PixelMeter intelligently filters out VPN traffic**, directly reading from physical network
 interfaces (Wi-Fi, Cellular, Ethernet) to provide accurate real-time speed statistics.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/Screenshot.png" width="400" alt="App Screenshot"/>
+</p>
+<p align="center">
+  <img src="docs/Component.png" width="175" alt="App Component"/>
+</p>
+
 ## Features
 
 - **Precise Traffic Stats**: Uses `ConnectivityManager` and `TrafficStats` to filter out `tun0` and

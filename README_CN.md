@@ -21,6 +21,15 @@ PixelMeter 是一款专为 Google Pixel 和原生 Android 设备设计的网速�
 
 **PixelMeter 智能过滤 VPN 流量**，直接从物理网络接口（Wi-Fi、蜂窝网络、以太网）读取数据，提供精准的实时网速统计。
 
+## 软件截图
+
+<p align="center">
+  <img src="docs/Screenshot.png" width="400" alt="软件截图"/>
+</p>
+<p align="center">
+  <img src="docs/Component.png" width="175" alt="软件组件展示"/>
+</p>
+
 ## 核心功能
 
 - **精准流量统计**: 结合 `ConnectivityManager` 和 `TrafficStats`，自动剔除 `tun0` 等虚拟接口流量。
