@@ -11,7 +11,7 @@
 ### 2. 架构与技术细节 (Architecture)
 
 - [混合数据源策略 (Data Source Strategy)](architecture/data-source-strategy.md): 详解 Standard API 与
-  Shizuku /proc 解析的双模实现策略。
+  流量接口过滤策略。
 - [服务生命周期 (Service Lifecycle)](architecture/service-lifecycle.md): 前台服务 (Foreground
   Service) 的保活机制与 Android 14+ 适配详情。
 

@@ -13,12 +13,24 @@ Shizuku IPC。
 Android 的 `TrafficStats` 提供了直接读取内核网络计数器的能力。
 为了避免 VPN 造成的流量双重统计（虚拟接口 + 物理接口），我们**显式只读取物理接口**的数据：
 
-1. **Wi-Fi**: `TrafficStats.getRxBytes("wlan0")`
-2. **Cellular**: `TrafficStats.getMobileRxBytes()`
+1. **遍历网络**: 使用 `ConnectivityManager.allNetworks` 获取当前活动网络。
+2. **能力过滤**: 检查 `NetworkCapabilities`。
+    - **排除**: `TRANSPORT_VPN` (核心步骤，避免双重统计)。
+    - **包含**: `TRANSPORT_WIFI`, `TRANSPORT_CELLULAR`, `TRANSPORT_ETHERNET`。
+3. **接口读取**: 获取 `LinkProperties` 中的接口名 (如 `wlan0`, `rmnet_data0`)。
+4. **统计汇总**: 调用 `TrafficStats.getRx/TxBytes(iface)` 累加数据。
 
 ```kotlin
-val totalRx = TrafficStats.getMobileRxBytes() + TrafficStats.getRxBytes("wlan0")
-val totalTx = TrafficStats.getMobileTxBytes() + TrafficStats.getTxBytes("wlan0")
+// 伪代码示例
+connectivityManager.allNetworks.forEach { network ->
+    val caps = connectivityManager.getNetworkCapabilities(network) ?: return@forEach
+    if (caps.hasTransport(TRANSPORT_VPN)) return@forEach // 忽略 VPN
+
+    if (caps.hasTransport(TRANSPORT_WIFI) || caps.hasTransport(TRANSPORT_CELLULAR)) {
+        val iface = connectivityManager.getLinkProperties(network)?.interfaceName
+        totalRx += TrafficStats.getRxBytes(iface)
+    }
+}
 ```
 
 ### 优势
@@ -44,5 +56,5 @@ val totalTx = TrafficStats.getMobileTxBytes() + TrafficStats.getTxBytes("wlan0")
 
 ## 兼容性
 
-* **MinSDK**: 31 (Android 12)。
+* **MinSDK**: 36 (Android 16)。
 * **Device**: Google Pixel 系列 (主要目标)，以及其他遵循标准接口命名的 Android 设备。

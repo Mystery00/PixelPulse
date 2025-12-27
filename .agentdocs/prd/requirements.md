@@ -1,10 +1,10 @@
 # 核心功能需求 (Product Requirements)
 
-| 项目       | 内容                                                     |
-|----------|--------------------------------------------------------|
-| **产品名称** | Pixel Pulse                                            |
-| **版本**   | v0.1.0                                                 |
-| **定位**   | 专为 Pixel/原生 Android 设计的精准网速指示器（支持 Shizuku 修正 VPN 流量统计） |
+| 项目       | 内容                                          |
+|----------|---------------------------------------------|
+| **产品名称** | Pixel Pulse                                 |
+| **版本**   | v0.1.0                                      |
+| **定位**   | 专为 Pixel/原生 Android 设计的精准网速指示器（智能剔除 VPN 流量） |
 
 ## 1. 项目背景与痛点
 
@@ -12,20 +12,18 @@
 `NetworkStatsManager`) 往往会将物理接口（`wlan0`/`rmnet`）与虚拟接口（`tun0`
 ）的流量叠加计算。这导致通知栏显示的网速通常是实际速度的 **2 倍**，产生误导。
 
-**Pixel Pulse** 旨在通过**混合数据源策略**解决此痛点，在 Shizuku 授权下直接读取 Kernel
-数据剔除虚拟接口流量，还原真实网速。
+**Pixel Pulse** 旨在通过 **单一数据源策略** 解决此痛点，利用 `ConnectivityManager` 智能识别物理接口，直接读取
+Kernel 数据剔除虚拟接口流量，还原真实网速。
 
 ## 2. 核心特性 (Features)
 
-### 2.1 精准流量统计 (Shizuku Enhanced)
+### 2.1 精准流量统计 (Native)
 
-* **默认模式**: 使用 Android 原生 `NetworkStatsManager`。
-* **Shizuku 模式**:
-    * 通过 **Shizuku Binder** 机制连接系统服务 (`INetworkManagementService` 或其他内部服务)
-      获取底层网络数据。
-    * **严格模式**: 必须通过 IPC 调用，**禁止**解析 `/proc` 文件或使用 Shell 文本处理。
-    * **接口黑名单**: 完全依赖用户配置（**无默认忽略接口**）。
-    * **计算公式**: `TrueSpeed = Sum(All_Interfaces) - Sum(User_Blacklisted_Interfaces)`。
+* **核心机制**: 使用 Android 原生 `TrafficStats` 配合 `ConnectivityManager`。
+* **智能过滤**:
+  * 自动识别所有物理接口 (Wi-Fi, Cellular, Ethernet)。
+  * **自动排除** VPN (`tun0` 等) 虚拟接口，无需用户手动配置黑名单。
+  * **计算公式**: `TrueSpeed = Sum(Physical_Interfaces_Rx/Tx)`。
 
 ### 2.2 原生体验 (Native Experience)
 
@@ -48,23 +46,21 @@
 
 ## 3. 技术规格 (Technical Requirements)
 
-* **Min SDK**: 29 (Android 10)
-* **Target SDK**: 35 (Android 15)
+* **Min SDK**: 36 (Android 16)
+* **Target SDK**: 36 (Android 16)
 * **架构**: MVVM + Clean Architecture (Simplified)
 * **语言**: Kotlin
 * **UI**: Jetpack Compose
 * **DI**: Koin
-* **IPC**: Rikka Shizuku API
 
 ## 4. 功能需求详情
 
-| ID      | 模块       | 功能点         | 描述                                                       | 优先级 |
-|:--------|:---------|:------------|:---------------------------------------------------------|:----|
-| **F01** | **核心服务** | 前台服务保活      | 启动 `dataSync` 类型的 Foreground Service，需处理 Android 14+ 适配。 | P0  |
-| **F02** | **数据源**  | 标准数据源       | 调用 `NetworkStatsManager` 获取流量数据。                         | P0  |
-| **F03** | **数据源**  | Shizuku 数据源 | 检测授权，通过 Shizuku Binder (IPC) 调用系统服务获取数据，需做多版本适配。         | P0  |
-| **F04** | **UI**   | 仪表盘首页       | 显示当前网速、运行模式 (Standard/Shizuku)、授权状态。                     | P0  |
-| **F05** | **配置**   | 接口过滤        | 提供 UI 配置忽略的接口列表 (如 `tun0`, `ppp0`)，支持快捷添加。               | P1  |
+| ID      | 模块       | 功能点    | 描述                                                       | 优先级 |
+|:--------|:---------|:-------|:---------------------------------------------------------|:----|
+| **F01** | **核心服务** | 前台服务保活 | 启动 `dataSync` 类型的 Foreground Service，需处理 Android 14+ 适配。 | P0  |
+| **F02** | **数据源**  | 核心数据源  | 调用 `ConnectivityManager` + `TrafficStats` 获取过滤后的物理接口流量。  | P0  |
+| **F04** | **UI**   | 仪表盘首页  | 显示当前网速、服务运行状态。                                           | P0  |
+
 | **F06** | **UI**   | 通知栏更新       | 每秒绘制 Bitmap 并更新 Notification。                            | P0  |
 | **F07** | **UI**   | 悬浮窗         | 实现 Compose 悬浮窗，处理 Touch 事件与 WindowManager 交互。            | P1  |
 | **F08** | **工具**   | 网络测速        | CCT 呼起 Cloudflare Speed Test。                            | P2  |
@@ -73,8 +69,6 @@
 
 | Key                   | 类型      | 默认值          | 说明                |
 |:----------------------|:--------|:-------------|:------------------|
-| `enable_shizuku`      | Boolean | `false`      | 主动开启 Shizuku 模式开关 |
-| `ignored_interfaces`  | Set     | `[]` (Empty) | 黑名单接口集合           |
 | `display_mode`        | Enum    | `BOTH`       | 显示模式 (上/下/合并总速)   |
 | `enable_notification` | Boolean | `false`      | 通知栏开关 (默认关闭)      |
 | `enable_overlay`      | Boolean | `false`      | 悬浮窗开关             |
@@ -82,5 +76,4 @@
 ## 6. 非功能性需求 (NFR)
 
 * **功耗控制**: 屏幕关闭时应停止或降低刷新频率（待定，需权衡后台保活需求）。
-* **异常恢复**: Shizuku 服务死亡 (`BinderDead`) 时，需无缝降级至标准模式并提示用户。
 * **隐私安全**: 仅在本地处理流量计数，绝不上传任何网络流量数据。

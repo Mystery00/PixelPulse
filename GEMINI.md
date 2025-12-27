@@ -9,14 +9,13 @@
     动态取色。
     - **架构**: MVVM (ViewModel + StateFlow + Repository)。
     - **依赖注入**: 使用 **Koin** (Koin-Android, Koin-Compose)。
-    - **兼容性**: MinSDK 为 29 (Android 10)，TargetSDK 为 Latest (35)。
+    - **兼容性**: MinSDK 为 36 (Android 16)，TargetSDK 为 Latest (36)。
 - **功能特性规范**:
-    - **混合数据源**:
-        - 默认模式: 使用 `NetworkStatsManager`。
-      - 增强模式: 检测到 **Shizuku** 授权后，通过 **Binder** 连接系统服务获取数据。
-        - **严格禁止**: 使用 `newProcess`/Shell 解析文件。
-        - **版本适配**: 针对不同 Android 版本进行 Binder 接口适配。
-    - **VPN 修正**: Shizuku 模式下完全依赖用户配置黑名单（无默认值）。
+  - **单一数据源**:
+    - 使用 `TrafficStats` 配合 `ConnectivityManager`。
+    - **核心逻辑**: 通过 `ConnectivityManager` 遍历物理网络接口 (Wi-Fi, Cellular, Ethernet)，排除 VPN
+      虚拟接口 (避免流量双重统计)，直接读取 `TrafficStats` 数据。
+    - **严格禁止**: 使用 Root 或 Shizuku 权限进行非必要的底层操作。
     - **UI 呈现**:
       - 首次启动不开启显示，由用户选择。
       - 通知栏动态图标 (Notification Icon): 实时绘制 Bitmap。双向模式下合并展示总量。
@@ -27,7 +26,7 @@
     - 避免在 Activity 中编写业务逻辑。
 - **注释**:
     - 使用中文编写清晰的 KDoc 与行内注释。
-  - 凡是涉及 Shizuku Binder 调用、反射调用的地方，必须注释说明其必要性与安全边界。
+  - 核心算法逻辑（如网络接口过滤）必须添加详细注释说明。
 
 ### 测试与验证
 
@@ -36,8 +35,8 @@
 - **Lint 检查**:
     - 运行 `./gradlew lint` 检查潜在的代码质量问题。
 - **功能验证**:
-    - 重点依赖代码审查（尤其是 Shell 解析逻辑的安全性与鲁棒性）。
-    - 必须在真机（Pixel 设备优先）上测试 Shizuku 授权流程及 Binder 死亡后的降级恢复逻辑。
+  - 重点测试开启 VPN 场景下的网速统计是否准确（不应包含 VPN 虚拟网卡流量）。
+  - 必须在真机（Pixel 设备优先）上测试。
 
 #### 项目本地校验流程
 
@@ -67,15 +66,12 @@
     - 核心目标: Google Pixel 系列 (Android 10+)。
     - 兼容目标: 运行原生/类原生 Android (AOSP) 的设备。
 - **SDK 版本**:
-    - **MinSDK**: 29 (Android 10)。
-    - **CompileSDK/TargetSDK**: 35 (Android 15)。
+  - **MinSDK**: 36 (Android 16)。
+  - **CompileSDK/TargetSDK**: 36 (Android 16)。
 - **关键技术决策**:
     - **DI**: Koin (轻量级，适合本工具)。
     - **Browser**: Chrome Custom Tabs (CCT) 用于集成 Cloudflare 测速。
-    - **IPC**: 使用 Shizuku API 进行提权操作。
-- **Shizuku 注意事项**:
-    - 必须处理 `BinderDeadListener`。
-  - 使用 Binder 方式获取数据，避免 Shell 命令开销。
+
 
 ## 任务处理指南
 
@@ -83,10 +79,9 @@
 - **方案分析**: 对于用户提出的设想，需结合 Android 系统限制（特别是后台限制）进行分析。
 - **分阶段实施**:
     1.  基础架构搭建 (Koin, Compose, Navigation)。
-    2.  标准 API 网速监听实现。
-    3.  Shizuku 集成与底层文件解析实现 (核心差异化功能)。
-    4.  UI 层实现 (通知栏绘图、悬浮窗)。
-    5.  CCT 集成与设置页完善。
+  2. 网速监听实现 (TrafficStats + ConnectivityManager)。
+  3. UI 层实现 (通知栏绘图、悬浮窗)。
+  4. CCT 集成与设置页完善。
 - **风险记录**: 涉及系统底层 (如读取 `/proc`) 或保活策略修改时，需在文档中记录潜在的兼容性风险。
 
 ### 任务回顾
